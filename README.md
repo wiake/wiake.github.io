@@ -1,5 +1,5 @@
 # wiake.github.io
-tinylinux.com blog home website
+tinylinux.info blog home website
 
 Created using makeblog (which dynamically modifies bashblog script):
 
