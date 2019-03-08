@@ -1,0 +1,666 @@
+#!/bin/bash
+## Program: makeblog by wiak (of murga-linux puppy forum)
+#           version: 0.0.1
+## Description: 
+#  Makeblog is modified fork of makepup that uses underlying bashblog engine rather than woof-CE scripts.
+#  Like makepup, it used sed methods to dynamically modify the operation of the underlying engine script,
+#  but without in-place altering the underlying original bashblog program itself. 
+#  The resulting frontend, provides and optional gui,
+#  provides more efficient tag page handling (optional),
+#  allows removal of DATE and/or AUTHOR from the blog posts,
+#  and allows (optional) WYSIWYG html editor to be
+#  used for bashblog post -html or edit functions
+## Usage:
+#  As with makepup, simply place script in any empty directory and run it... (e.g. ./makeblog -g)
+## Requirements: 
+#  Currently requires GNU sed (since using sed -i).
+#  To use the optional gui, currently needs gtkdialog (as in DebianDogs and Puppy Linux).
+#  If not on your system, a deb package of gtkdialog suitable for Debian or Ubuntu systems is available here:
+#    32bit: [url]https://github.com/DebianDog/xenialdog/blob/gh-pages/Packages/Included/gtkdialog_0.8.3-1_i386.deb[/url]
+#    64bit: [url]https://github.com/DebianDog/xenialdog/blob/gh-pages/Packages64/Included/gtkdialog_0.8.3-1_amd64.deb[/url]
+#
+## Program makeblog Copyright (C) wiak (YMD) 2017/10/21 +
+#  Program methodology forked from makepup: copyright wiak (YMD) 2017/08/22 +
+## License: MIT (aka X11 license)
+#
+## Change log:
+### 0.0.1 first version
+
+trap ontrap INT TERM ERR EXIT
+
+export TEXTDOMAIN=makeblog
+export OUTPUT_CHARSET=UTF-8
+. gettext.sh
+
+programversion="0.0.1"
+PROGRAM_TMPDIR="/tmp/makeblog/"
+mkdir -p "${PROGRAM_TMPDIR}"
+
+# Default config:
+FILENAME=""       # Name of file to edit or post etc (blog title will be used in posts if this FILENAME left blank)
+P_TXT_EDITOR=""   # Editor used for Markdown and config file editing (e.g. geany, gedit, leafpad etc)
+FMANAGER=""       # Filemanager the gui BlogHome button pops up
+DATE="true"       # "true" means: append date to blog title
+AUTHOR="true"     # "true" means: append author to blog title
+TAGPAGE="true"    # "true" means: call bashblog_mod_tagpage (makes links to url rather than fullpages on tags page)
+BACK2INDEX="true" # "true" means: add a link back to Index page at bottom of each post being created or edited
+gui=""            # "gui="gui" means: use gui frontend
+
+ontrap (){
+rm -rf /tmp/makeblog/
+exit 1
+}
+
+makeblogconf (){
+ if [ ! -e ./makeblog.conf ];then
+  printf "# Default config.
+# NOTE WELL that any commandline args will override the related default values
+# and gui choices will override all of the following defaults.
+
+# Name of file to edit or post etc (blog title will be used in posts if this FILENAME left blank)Filename to edit.
+# Usually left blank unless editing a particular post or wanting a different post name:
+FILENAME=\"\"
+
+# Editor used for Markdown and config file editing (e.g. geany, gedit, leafpad etc).
+# Leave blank to let program find first one available from internal list:
+P_TXT_EDITOR=\"\"
+
+# Filemanager the gui BlogHome button pops up.
+# Leave blank to let program find first one available from internal list:
+FMANAGER=\"\"
+
+# \"true\" means: append date to blog title. \"false\" means no date listed in blog subtitle:
+DATE=\"true\"
+
+# \"true\" means: append author to blog title. \"false\" means no author listed in blog subtitle:
+AUTHOR=\"true\"
+
+# \"true\" means: call bashblog_mod_tagpage (makes links to url rather than fullpages on tags page):
+TAGPAGE=\"true\"
+
+# \"true\" means: add a link back to Index page at bottom of each post being created or edited:
+BACK2INDEX=\"true\"
+
+# gui=\"gui\" means: use gui frontend:
+gui=\"\"
+" >makeblog.conf
+ fi
+}
+
+make_bbconfig (){
+ if [ ! -e .config ];then
+  sed -n '
+/global_software_name="BashBlog"/,/which Markdown.pl 2/p
+' <"${PROGRAM_TMPDIR}"bashblog_wiak >.config
+ fi
+}
+
+check_FMANAGER (){
+if [[ -z "${FMANAGER// }" ]];then
+ # Filemanager the gui BlogHome button pops up:
+ if [ $(command -v pcmanfm 2>/dev/null) ];then FMANAGER="pcmanfm"
+ elif [ $(command -v thunar 2>/dev/null) ];then FMANAGER="thunar"
+ elif [ $(command -v rox 2>/dev/null) ];then FMANAGER="rox"
+ elif [ $(command -v xfe 2>/dev/null) ];then FMANAGER="xfe"
+ elif [ $(command -v spacefm 2>/dev/null) ];then FMANAGER="spacefm"
+ elif [ $(command -v emelfm2 2>/dev/null) ];then FMANAGER="emelfm2"
+ elif [ $(command -v dolphin 2>/dev/null) ];then FMANAGER="dolphin"
+ elif [ $(command -v krusader 2>/dev/null) ];then FMANAGER="krusader"
+ elif [ $(command -v nautilus 2>/dev/null) ];then FMANAGER="nautilus"
+ elif [ $(command -v konqueror 2>/dev/null) ];then FMANAGER="konqueror"
+ fi
+ export FMANAGER
+fi
+}
+
+check_EDITOR (){
+if [[ -z "${EDITOR// }" ]];then
+ # Editor used for html editing:
+ if [ $(command -v bluegriffon 2>/dev/null) ];then EDITOR="bluegriffon"
+ elif [ $(command -v seamonkey 2>/dev/null) ];then EDITOR="seamonkey --new-instance --edit $@"
+ elif [ $(command -v kompozer 2>/dev/null) ];then EDITOR="kompozer"
+ elif [ $(command -v geany 2>/dev/null) ];then EDITOR="geany"
+ elif [ $(command -v leafpad 2>/dev/null) ];then EDITOR="leafpad"
+ elif [ $(command -v gedit 2>/dev/null) ];then EDITOR="gedit"
+ fi
+ export EDITOR
+fi
+}
+
+check_P_TXT_EDITOR (){
+if [[ -z "${P_TXT_EDITOR// }" ]];then
+ # Editor used for Markdown and config file editing:
+ if [ $(command -v geany 2>/dev/null) ];then P_TXT_EDITOR="geany"
+ elif [ $(command -v gedit 2>/dev/null) ];then P_TXT_EDITOR="gedit"
+ elif [ $(command -v leafpad 2>/dev/null) ];then P_TXT_EDITOR="leafpad"
+ elif [ $(command -v beaver 2>/dev/null) ];then P_TXT_EDITOR="beaver"
+ fi
+ export P_TXT_EDITOR
+fi
+}
+
+single_instance (){
+ case "$EDITOR" in
+  "bluegriffon") # NOTE WELL: only works when no other bluegriffon running
+                 # wiak: Need to look more into that
+    printf '
+You need to close any other running instances of
+bluegriffon before proceeding. Please do so, and then 
+enter y when ready to continue, any other key to quit: '
+choice=y #wiak or make it: read choice
+    case "$choice" in
+        y|Y|yes|YES) : ;;
+        *) exit 1 ;;
+    esac
+    ;;
+  "seamonkey")
+    EDITOR="seamonkey -edit"  # This only seems to work if other instances of seamonkey not running
+                              # wiak: Need to look more into that
+    printf '
+You need to close any other running instances of
+seamonkey before proceeding. Please do so, and then 
+enter y when ready to continue, any other key to quit: '
+    read choice
+    case "$choice" in
+        y|Y|yes|YES) : ;;
+        *) exit 1 ;;
+    esac
+    ;;
+  "geany") EDITOR="geany -i"
+    ;;
+ esac
+}
+
+usage () {
+ printf >&2 \
+"
+usage: $0 <options> [filename (optional depending on command)]
+
+e.g. $0 -g (for gui from which further options/arguments can be set)
+
+Makeblog is a frontend for bashblog and adds optional gui, 
+whilst using the underlying original bashblog code as a blog engine.
+In addition it optionally provides more efficient tag page handling,
+optional date and/or author post subtitles, 
+and html WYSIWYG editing capability.
+ 
+Commandline usage is basically as in underlying bashblog 
+(which is automatically downloaded by makeblog if it is
+not already present in same directory as makeblog)
+but makeblog uses '--' rather than '-' for long options and for commands
+and comes with a few extra options.
+
+Makeblog accepts long or short options (e.g. --post or -p):
+
+-A, --AUTHOR
+    DO NOT append author to post subtitle
+-d, --delete <filename>
+    deletes the post and rebuilds the blog
+-B, --BACK2INDEX
+    DO NOT append further Back to Index link to post
+-D, --DATE
+    DO NOT append date to the post subtitle
+-e, --edit [-n|-f] <filename>
+    edit an already published .html or .md file.
+    **NEVER** edit manually a published .html file. Instead, always use
+    this edit function as it keeps internal data and rebuilds the blog.
+    Use with --html to force html rather than Markdown editing.
+    Use with '-n' to give the file a new name, if title was changed.
+    Use with '-f' to edit full html file, instead of just
+    text part (also preserves name)
+-g, --gui
+    start makeblog with gui and select further arguments/options
+    from the gui
+-l, --list
+    list all posts
+-p, --post [--html] [drafts/filename_of_file_with_body_contents_only]
+    Insert a new blog post, or the filename of a draft to continue
+    editing it. Makeblog tries to use Markdown by default, and falls
+    back to HTML if Markdown not available. Use '--html' to override it
+    and edit the post as HTML even when Markdown is available
+-r, --rebuild
+    regenerates all the pages and posts, preserving
+    the content of the entries
+-R, --RESET
+    deletes everything except makeblog and bashblog scripts.
+    Use with a lot of caution and keep backup suggested!
+-t, --tags [-n]
+    list all tags in alphabetical order.
+    Use option -n to sort list by number of posts
+-T, --TAGPAGELINKS (or simply --TAGPAGE)
+    use full posts (rather than links to them) in tagpages
+-v, --version
+    show release version
+-u, --usage
+    show these usage instructions
+
+Makeblog should be put inside an empty directory, in which you
+wish to create your blog locally. You should then run makeblog
+from a terminal with an appropriate commandline:
+
+For example to run from gui (which automatically sets
+the EDITOR variable):
+
+$0 -g
+
+Note, however, if you do not want to use the gui, you must set
+EDITOR variable prior to further makeblog commandline:  
+
+e.g. EDITOR=bluegriffon ./makeblog --post --html
+     EDITOR=bluegriffon ./makeblog --edit --html html_filename
+
+Note that gui supplied options take precedence over commandline options,
+which take precedence over inbuilt makeblog defaults.
+
+"
+}
+
+combobox_list () {
+ comboitems=""
+ for each_item in $@; do
+  comboitems="${comboitems}<item>\"$each_item\"</item>"
+ done
+ printf "$comboitems"
+}
+
+simplegui () {
+export SIMPLEGUI="
+<window title=\"makeblog $programversion by wiak\">
+<vbox>
+ <notebook labels=\"$(gettext 'Basic|Advanced|Usage')\">
+ <vbox>
+<text><label>$(gettext 'https://github.com/cfenollosa/bashblog')</label></text>
+  <frame $(gettext 'Settings')>
+   <vbox>
+    <frame>
+     <checkbox>
+      <label>$(gettext 'Append date to created post title')</label>
+      <variable>DATE</variable>
+      <default>true</default>
+     </checkbox>
+    </frame>
+   </vbox>
+   <vbox>
+    <frame>
+     <checkbox>
+      <label>$(gettext 'Append author name to created post title')</label>
+      <variable>AUTHOR</variable>
+      <default>true</default>
+     </checkbox>
+    </frame>
+   </vbox>
+   <vbox>
+    <frame>
+     <checkbox tooltip-text=\"$(gettext 'The link gets added at the end of the post. Best set to off when editing to avoid double link.')\">
+      <label>$(gettext 'Add Back to Index link when post or edit')</label>
+      <variable>BACK2INDEX</variable>
+      <default>true</default>
+     </checkbox>
+    </frame>
+   </vbox>
+   <hbox>
+    <text><label>$(gettext 'bashblog function: ')</label></text>
+    <combobox tooltip-text=\"$(gettext 'post, to write a new blog post (if no filename is supplied the post title will be used as the filename); edit, to edit existing post (needs filename to edit); delete, to delete supplied filename; list, to list all posts; rebuild, to regenerate all the pages and posts; RESET, to delete all posts; tags, to list all tags')\">
+     <variable>FUNCTION</variable>
+      $(combobox_list post edit delete list rebuild RESET tags usage)
+     </combobox>
+   </hbox>
+   <hbox>
+    <text><label>$(gettext 'post or edit format: ')</label></text>
+	<combobox>
+     <variable>POSTFORMAT</variable>
+     $(combobox_list HTML Markdown)
+    </combobox>
+   </hbox>
+   <hbox>
+    <text><label>$(gettext 'All function options: ')</label></text>
+    <combobox tooltip-text=\"$(gettext 'edit -n to auto-change filename when title changes; edit -f to edit full html page; tags -n to sort list by number of posts')\">  
+     <variable>OPTION</variable>
+     $(combobox_list null -n -f)
+    </combobox>
+   </hbox>
+   <hbox homogeneous=\"false\">
+    <text><label>$(gettext 'filename: ')</label></text>
+      <entry tooltip-text=\"$(gettext 'e.g. Select, drag and drop, copy and paste, or enter filename here. Filename is optional with the post command (otherwise uses post title as filename) but required by edit or delete commands')\" editable=\"true\" accept=\"filename\">
+        <variable>FILENAME</variable>
+        <input>echo \"\$FILENAME\"</input>
+      </entry>
+      <button tooltip-text=\"$(gettext 'Browse and select file')\">
+        <input file stock=\"gtk-directory\"></input>
+        <variable>FILE1</variable>
+        <action type=\"fileselect\">FILENAME</action>
+      </button>
+   </hbox>
+   <hbox>
+    <text><label>$(gettext 'EDITOR to use for HTML: ')</label></text>
+    <combobox tooltip-text=\"$(gettext 'Text editor is always used for Markdown format')\">  
+     <variable>EDITOR</variable>
+     $(combobox_list bluegriffon seamonkey kompozer geany gedit leafpad beaver vi emacs nano)
+    </combobox>
+   </hbox>
+  </frame> 
+  <hbox>
+   <text><label>$(gettext 'Check your settings and then:')</label></text>
+   <button>
+    <label>$(gettext 'Do This!')</label>
+    <action type=\"exit\">BUILD</action>
+   </button>
+  </hbox>
+ </vbox>
+ <vbox>
+  <frame>
+   <checkbox tooltip-text=\"$(gettext 'Otherwise each tag summary page contains all fullsize posts containing that tag, which can be huge')\">
+    <label>$(gettext 'Tag page contents URL links instead of full posts')</label>
+    <variable>TAGPAGE</variable>
+    <default>true</default>
+   </checkbox>
+  </frame>
+  <hbox>
+   <text><label>$(gettext 'Check your settings and then:')  </label></text>
+   <button>
+    <label>$(gettext 'Build your Blog!')</label>
+    <action type=\"exit\">BUILD</action>
+   </button>
+  </hbox>
+ </vbox>
+ <vbox>
+  <frame $(gettext 'Examples:')>
+   <text xalign=\"0\"><label>$(gettext 'Create a new blog post:')</label></text>
+   <text xalign=\"0\"><label>$(gettext '#       ./makeblog  --post  [--html]  [filename]')</label></text>
+   <text xalign=\"0\"><label>$(gettext 'Edit an existing blog post:')</label></text>
+   <text xalign=\"0\"><label>$(gettext '#       ./makeblog  --edit  [-n | -f]  [filename]')</label></text>
+   <text xalign=\"0\"><label>$(gettext 'Delete an existing blog post:')</label></text>
+   <text xalign=\"0\"><label>$(gettext '#       ./makeblog  --delete  [filename]')</label></text>
+   <text xalign=\"0\"><label>$(gettext 'Regenerate all the pages and posts:')</label></text>
+   <text xalign=\"0\"><label>$(gettext '#       ./makeblog  --rebuild')</label></text>
+   <text xalign=\"0\"><label>$(gettext 'Delete everything (use with caution):')</label></text>
+   <text xalign=\"0\"><label>$(gettext '#       ./makeblog  --RESET')</label></text> 
+   <text xalign=\"0\"><label>$(gettext 'List all posts:')</label></text>
+   <text xalign=\"0\"><label>$(gettext '#       ./makeblog  --list')</label></text>
+   <text xalign=\"0\"><label>$(gettext 'List all tags in alphabetical order:')</label></text>
+   <text xalign=\"0\"><label>$(gettext '#       ./makeblog  --tags  [-n]')</label></text>
+   <text xalign=\"0\"><label>$(gettext '#      (Use -n to sort list by number of posts)')</label></text>
+  </frame>
+  <hbox>
+   <text><label>$(gettext 'Check your settings and then:')  </label></text>
+   <button>
+    <label>$(gettext 'Build your Blog!')</label>
+    <action type=\"exit\">BUILD</action>
+   </button>
+  </hbox>
+ </vbox> 
+ </notebook>
+ <hbox>
+  <button tooltip-text=\"$(gettext 'Edit bashblog main config file')\">
+   <label>$(gettext 'Config')</label>
+   <action>$P_TXT_EDITOR .config &</action>
+  </button>
+  <button tooltip-text=\"$(gettext 'Edit main.css style sheet')\">
+   <label>$(gettext 'mainCSS')</label>
+   <action>$P_TXT_EDITOR main.css &</action>
+  </button>
+  <button tooltip-text=\"$(gettext 'Edit blog.css style sheet')\">
+   <label>$(gettext 'blogCSS')</label>
+   <action>$P_TXT_EDITOR blog.css &</action>
+  </button>
+  <button tooltip-text=\"$(gettext 'Opens filemanager at local blog base directory')\">
+   <label>$(gettext 'BlogHome')</label>
+   <action>$FMANAGER .</action>
+  </button>
+  <button><label>$(gettext 'QUIT')</label></button>
+ </hbox>
+</vbox>
+</window>
+"
+ gtkdialog3 --center --program=SIMPLEGUI >/tmp/makeblog/makeblog_settings
+ . /tmp/makeblog/makeblog_settings
+ if [ "$EXIT" = "BUILD" ];then
+  :
+ else
+  printf "\nQuit option chosen in makeblog gui\n\n"
+  exit 0
+ fi
+}
+
+showgui (){
+ simplegui
+}
+
+cmdargs () {
+ [ ! "$1" ] && { usage; exit 1; }
+ while [[ ${1:0:1} = '-' ]] ; do
+  if [[ ${1:1:1} = '-' ]];then
+   case "${1:2:1}" in
+      'A') AUTHOR="false" ;;
+      'd') FUNCTION="delete" ;;
+      'B') BACK2INDEX="false" ;;
+      'D') DATE="false" ;;
+      'e') FUNCTION="edit" ;;
+      'f') OPTION="-f" ;;
+      'g') gui="gui" ;;
+      'h') POSTFORMAT="HTML" ;;
+      'l') FUNCTION="list" ;;      
+      'n') OPTION="-n" ;;
+      'p') FUNCTION="post" ;;
+      'r') FUNCTION="rebuild" ;;
+      'R') FUNCTION="RESET" ;; 
+      't') FUNCTION="tags" ;;
+      'T') TAGPAGE="false" ;;
+      'v') printf "\n$0 version $programversion\n"; exit 0;;
+      *) usage
+         exit 1 ;;
+   esac
+  else
+   argvlen=${#1}
+   nchars=1
+   while [ $nchars -lt $argvlen ] ; do
+    case ${1:$nchars:1} in
+      'A') AUTHOR="false" ;;
+      'd') FUNCTION="delete" ;;
+      'B') BACK2INDEX="false" ;;
+      'D') DATE="false" ;;
+      'e') FUNCTION="edit" ;;
+      'f') OPTION="-f" ;;
+      'g') gui="gui" ;;
+      'h') POSTFORMAT="HTML" ;;
+      'l') FUNCTION="list" ;;      
+      'n') OPTION="-n" ;;
+      'p') FUNCTION="post" ;;
+      'r') FUNCTION="rebuild" ;;
+      'R') FUNCTION="RESET" ;; 
+      't') FUNCTION="tags" ;;
+      'T') TAGPAGE="false" ;;
+      'v') printf "\n$0 version $programversion\n"; exit 0;;
+      *) usage
+         exit 1 ;;
+    esac
+    nchars=$(($nchars+1))
+   done
+  fi
+  shift
+ done
+ FILENAME="$1"
+}
+
+fetch_archive (){
+ clonefile="bb.sh"
+ if [ ! -e "${clonefile}" ]; then
+   wget -c --no-check-certificate "https://github.com/cfenollosa/bashblog/raw/master/${clonefile}" -O "${clonefile}"
+   chmod +x bb.sh
+ fi
+}
+#    sed -i '"'"'1s/^.*$/<h3>&<\\/h3>/'"'"' "$1" #wiak: embed first line post title in h3 tags for identification \
+bashblog_mod (){
+ sed '
+/global_url="http:\/\/example.com\/blog"/ i # global_url="file://$(pwd)" #wiak: this url would work on local computer only
+s|global_url="http://example.com/blog"|# global_url="http://example.com/blog"|
+/global_url="http:\/\/example.com\/blog"/ a  global_url="https://yourusername.github.io" #wiak: substitute your actual github username here
+s/1%%\.\*/1%.*/g
+/\$EDITOR "\$TMPFILE"/ i preprocess_htmlbody "$TMPFILE" #wiak: put h3 tags round first line Title
+/\$EDITOR "\$1"/ i preprocess_htmlbody "$1" #wiak: put h3 tags round first line Title
+s/\$EDITOR "\$/\$EDITOR "\$(pwd)"\/"\$/ #wiak: give EDITOR full path
+s/title=$(head -n 1 $TMPFILE)/title="$(sed -n '"'"'1s\/^[[:space:]]*<h3>\/\/; 1s\/<\\\/h3>[[:space:]]*$\/\/;1p'"'"' "$TMPFILE")"/
+/Parse the plain text/ i \
+preprocess_htmlbody(){ \
+    sed -i '"'"'/./,$!d'"'"' "$1" #wiak: remove any leading blank lines \
+    sed -i '"'"'1s/^<h3>//;1s/<\\/h3>$//;1s/^.*$/<h3>&<\\/h3>/'"'"' "$1" #wiak: embed first line post title in h3 tags for identification \
+} \
+ \
+extract_htmlbodycontents(){ \
+    if $(grep -q '"'"'<head>'"'"' "$1");then #wiak \
+        sed -i -n '"'"'/<body[^>]*>/,/<\\/body>/p'"'"' "$1" #wiak: select body range \
+        sed -i '"'"'1s/<body[^>]*>/<body2delete>\\n/'"'"' "$1" #wiak: put <body tag on own line \
+        sed -i '"'"'/<body2delete>/d'"'"' "$1" #wiak: delete <body tag line \
+    fi #wiak added \
+    sed -i '"'"'/./,$!d'"'"' "$1" #wiak: remove any leading blank lines \
+    sed -i '"'"'1s/<\\/h3>/<\\/h3>\\n/'"'"' "$1" #wiak: put h3 Title line on own line \
+    sed -i '"'"'2s/^[[:space:]]*<\\/h3>//'"'"' "$1" #wiak: remove any leftover /h3 tags on 2nd line \
+    sed -i '"'"'1s/<h3>//g'"'"' "$1" #wiak: blank out possible leftover <h3> tags on first line \
+    sed -i '"'"'/./,$!d'"'"' "$1" #wiak: remove any leading blank lines (again) \
+    sed -i '"'"'1s/[[:space:]]*//; 1s/<[^>]*>//g'"'"' "$1" #wiak: remove all tags from Title line \
+    sed -i '"'"'s/<p>'"'"'"$template_tags_line_header"'"'"'/\\n<p>'"'"'"$template_tags_line_header"'"'"'/'"'"' "$1" #wiak: put Tags: line on own line \
+    sed -i '"'"'/^<p>'"'"'"$template_tags_line_header"'"'"'/ {s/\\(.*<\\/p>\\)/\\1\\n/; s/^[[:space:]]*//;}'"'"' "$1" \
+    sed -i '"'"'s/<\\/body/\\n<endbody2delete/'"'"' "$1" #wiak: put </body line on own line \
+    sed -i '"'"'/<endbody2delete>/d'"'"' "$1" #wiak: delete </body line \
+} \
+
+/parse_file()/ a \
+    extract_htmlbodycontents "$1" #wiak
+/prefix_tags$tagname.html/ i \
+echo "<div id=\\"all_posts\\"><a href=\\".\/$index_file\\">$template_archive_index_page<\/a><\/div>" >>"$i"
+' <bb.sh >"${PROGRAM_TMPDIR}"bashblog_wiak
+ chmod +x "${PROGRAM_TMPDIR}"bashblog_wiak
+}
+
+bashblog_mod_no_date (){
+ sed -i '
+/echo -n "<div class=\\"subtitle/ s|^.*$|echo -n "<div class=\"subtitle\">"  #wiak was: echo -n "<div class=\"subtitle\">$(LC_ALL=$date_locale date +"$date_format")"|
+' "${PROGRAM_TMPDIR}"bashblog_wiak
+}
+
+bashblog_mod_no_author (){
+ sed -i '
+/ -n \$author / s/^.*$/  #wiak was: [[ -n $author ]] \&\& echo -e " \&mdash; \\n\$author"/
+' "${PROGRAM_TMPDIR}"bashblog_wiak
+}
+
+bashblog_mod_tagpage (){
+ sed -i '
+/with just the content/,/for tag in $(tags_in_post/d
+/create temporal tag files/ a \
+# with just the content of the posts \
+tmpfile=tmp.$RANDOM \
+while [[ -f $tmpfile ]]; do tmpfile=tmp.$RANDOM; done \
+prev_month="" \
+while IFS='"'"''"'"' read -r i; do \
+    is_boilerplate_file "$i" \&\& continue \
+    echo -n "." \
+ { \
+    # Month headers \
+    month=$(LC_ALL=$date_locale date -r "$i" +"$date_allposts_header") \
+    if [[ $month != "$prev_month" ]]; then \
+    [[ -n $prev_month ]] \&\& echo "<\/ul>" \
+    echo "<h4 class='allposts_header'>$month<\/h4>" \
+    echo "<ul>" \
+    prev_month=$month \
+    fi \
+    # Title \
+    title=$(get_post_title "$i") \
+    printf "<li>\\n" \
+    printf "<h3><a class=\\"ablack\\" href=\\"$i\\">$title<\/a><\/h3> \&mdash;" \
+    # Date \
+    date=$(LC_ALL=$date_locale date -r "$i" +"$date_format") \
+    echo " $date<\/li>" \
+    echo -n "" 1>\&3 \
+    echo "<!-- text begin -->" #wiak used in all_tags to count posts \
+  } 3>\&1 >"$tmpfile" #wiak redirect file desc 3 to 1 to keep dot progress printing clean I think \
+  sed -i '"'"'/Month headers/ i <ul>'"'"' "$tmpfile" #wiak needs checked: initial <ul> around url links list \
+  for tag in $(tags_in_post "$i"); do
+/tagname%.tmp.html/ a echo "<\/ul>" >>"$i" #wiak append the final <\/ul> to url links list
+' "${PROGRAM_TMPDIR}"bashblog_wiak
+}
+
+bashblog_mod_back2index (){
+ sed -i '
+/Create the actual html page/ i \
+echo "<div id=\\"all_posts\\"><a href=\\".\/$index_file\\">$template_archive_index_page<\/a><\/div>" >>"$content"
+' "${PROGRAM_TMPDIR}"bashblog_wiak
+}
+
+if ! tty -s; then xmessage "$(printf \"makeblog should be run from a terminal.\")"; fi
+makeblogconf  # makes makeblog.conf if not existing
+[ -e ./makeblog.conf ] && . ./makeblog.conf || { printf "\nThere is no config file in this directory\n"; exit 1; }
+cmdargs "$@" # command args override relevant makeblog.conf defaults
+
+check_FMANAGER  # Auto-selects if currently empty selections
+check_EDITOR
+check_P_TXT_EDITOR
+[ "$gui" = "gui" ] && showgui # overrides cmdargs
+if [ ! -z "${FILENAME// }" ];then
+ FILENAME="${FILENAME##*/}"
+ [ "$POSTFORMAT" = "HTML" ] && FILENAME="${FILENAME%.*}.html" || FILENAME="${FILENAME%.*}.md"
+fi
+if [ "$POSTFORMAT" = "HTML" ];then
+ POSTFORMAT="-html"
+else
+ POSTFORMAT=""
+ [ "$gui" ] && EDITOR="$P_TXT_EDITOR" # not sure if bluegriffon or other html editors would do when input file just Markdown txt...
+fi
+[ "$OPTION" = "null" ] && OPTION=""
+[ "$FUNCTION" = "RESET" ] && FUNCTION="reset"
+case "$FUNCTION" in
+ "post") OPTION=""
+         single_instance
+         if [ ! -z "${FILENAME// }" ];then
+          FILENAME=drafts/"${FILENAME}"
+          if [ ! -f "$FILENAME" ];then
+           printf "\nError. No such file."
+           printf "\nFile must contain body contents only and be stored in subfolder 'drafts'.\nCheck usage and try again.\n"
+           exit 1
+          fi
+          if $(grep -q '<!DOCTYPE' "$FILENAME");then
+           printf "\nError. File must contain body contents only and be stored in subfolder 'drafts'.\nCheck usage and try again.\n"
+           exit 1
+          fi
+         fi
+ ;;
+
+ "edit") POSTFORMAT=""
+         single_instance
+ ;;
+ "delete") OPTION=""; POSTFORMAT="" ;;
+ "rebuild") OPTION=""; POSTFORMAT=""; FILENAME=""
+    printf '
+This function rebuilds all blog files and will
+permanently modify all title "date and author" details
+according to your current date/author options selection.
+Are you sure?
+Enter y when ready to continue, any other key to quit: '
+    read choice
+    case "$choice" in
+        y|Y|yes|YES) : ;;
+        *) exit 1 ;;
+    esac            
+ ;;
+ "reset") OPTION=""; POSTFORMAT=""; FILENAME="" ;;
+ "list") OPTION=""; POSTFORMAT=""; FILENAME="" ;;
+ "tags") [ "$OPTION" = "-f" ] && OPTION=""; POSTFORMAT=""; FILENAME="" ;; 
+  *) usage; exit 1 ;;
+esac
+fetch_archive
+bashblog_mod
+[ "$DATE" = "false" ] && bashblog_mod_no_date
+[ "$AUTHOR" = "false" ] && bashblog_mod_no_author
+[ "$TAGPAGE" = "true" ] && bashblog_mod_tagpage
+[ "$BACK2INDEX" = "true" ] && bashblog_mod_back2index
+make_bbconfig  # after fetch_archive makes bashblog .config is not existing
+
+"${PROGRAM_TMPDIR}"bashblog_wiak $FUNCTION $OPTION $POSTFORMAT "$FILENAME"
+
+printf '
+makeblog script is now finished. You can find a local copy of the
+created blog pages in the same directory you started makeblog from.
+'
+rm -rf /tmp/makeblog/
+exit 0
+# END OF MAIN SCRIPT

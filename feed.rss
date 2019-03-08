@@ -1,0 +1,223 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom" xmlns:dc="http://purl.org/dc/elements/1.1/">
+<channel><title>Tiny Linux Distributions</title><link>https://yourusername.github.io/index.html</link>
+<description>A blog about small but flexible Linux distributions</description><language>en</language>
+<lastBuildDate>Fri, 08 Mar 2019 18:35:00 +1300</lastBuildDate>
+<pubDate>Fri, 08 Mar 2019 18:35:00 +1300</pubDate>
+<atom:link href="https://yourusername.github.io/feed.rss" rel="self" type="application/rss+xml" />
+<item><title>
+Distributions Supported on Murga Puppy Linux Forum
+</title><description><![CDATA[
+
+    <table class="forumline" border="0" cellpadding="3" cellspacing="1" width="100%">
+      <tbody>
+        <tr>
+          <td class="row1" height="28" valign="top" width="100%"> <span class="postbody">Murga
+              Puppy Linux Forum has expanded over the years. It now provides
+              support for not only Puppy distributions, but also a number of
+              similarly small and flexible distributions, which were inspired by
+              Puppy and generally provide some of the look-and-feel and
+              functionality of Puppy itself but using other distribution
+              methodologies, such as for example being based on unique container
+              system, Debian Live, Linux From Scratch, Tiny Core Linux, or
+              Slitaz etc. Furthermore, everyone has the right to create or
+              remaster (make a 'spin' or fork) her or his own distribution and
+              bring it to the attention of the Forum. <br>
+              <br>
+              One result of that increased diversity is that not every
+              application created for one distribution, nor technique for
+              accomplishing some task in one distribution, may work in another
+              distribution. Forum users should be particularly careful to post
+              any comments, questions, bug reports etc.. about any particular
+              distribution in the specific sections/threads assigned for that
+              distribution. Carefully posting in appropriate threads helps avoid
+              confusion and avoids thread moderators having to waste time
+              answering or re-directing inappropriate questions or comments.
+              Each distribution has its own thread in either the Derivative
+              Section, the Projects Section or the Cutting Edge Section. The
+              following is not intended to be exhaustive, but rather to provide
+              an overview of that diversity. <br>
+              <br>
+              Amongst the downloadable distributions you can find in various
+              sections of the forum are: <br>
+              <br>
+              <span style="font-weight: bold">1. Puppy Linux itself. <br>
+                <br>
+                Please refer to <a href="http://puppylinux.com/download.html" target="_blank"
+                  class="postlink">http://puppylinux.com/download.html</a> for a
+                list of the latest woof-CE built puppies.</span> <br>
+              <br>
+              Puppy Linux has been developed following on from the design of its
+              originator, BarryK. <br>
+              <br>
+              Though the underlying operation, boot mechanisms, major control
+              scripts etc, of Puppy Linux are unique, it nowadays comes in
+              multiple flavours such as individual versions that use Debian,
+              Ubuntu, or Slackware libraries and application repositories as
+              part of their operating design. Nowadays, official Puppy Linux
+              distributions are assembled via a build system called woof-CE. In
+              addition, various individuals create their own specialised
+              versions of Puppy Linux by remastering woof-CE built Pups. <br>
+              <br>
+              As with most of the distributions described in this post, "if you
+              are a member of the Puppy Linux community, then you are a member
+              of the Puppy Linux Team". However, Puppy does have some officially
+              appointed stewards, who are listed here: <br>
+              <br>
+              <a href="http://puppylinux.com/team.html" target="_blank" class="postlink">http://puppylinux.com/team.html</a>
+              <br>
+              <br>
+              Some information about Puppy remasters, and about Puppy stewards'
+              view on the relationship between Puppy itself and the other
+              distributions mentioned in this post can be found in Puppy
+              Frequently Asked Questions, here: <br>
+              <br>
+              <a href="http://puppylinux.com/faq.html" target="_blank" class="postlink">http://puppylinux.com/faq.html</a>
+              <br>
+              <br>
+              You can find more information about Puppy here: <br>
+              <br>
+              <a href="http://puppylinux.com/index.html" target="_blank" class="postlink">http://puppylinux.com/index.html</a>
+              <br>
+              <br>
+              <br>
+              <span style="font-weight: bold">2. EasyOS.</span> <br>
+              <br>
+              "EasyOS is designed from scratch to support containers. Any app
+              can run in a container, in fact an entire desktop can run in a
+              container. Container management is by a simple GUI, no messing
+              around on the commandline. The container mechanism is named Easy
+              Containers, and is designed from scratch (Docker, LXC, etc are not
+              used). Easy Containers are extremely efficient, with almost no
+              overhead -- the base size of each container is only several KB". <br>
+              <br>
+              EasyOS is created and maintained by BarryK, the originator of
+              Puppy Linux. <br>
+              <br>
+              You can find more information about EasyOS, including download
+              links, here: <br>
+              <br>
+              <a href="https://easyos.org/" target="_blank" class="postlink">https://easyos.org/</a>
+              <br>
+              <br>
+              <br>
+              <span style="font-weight: bold">3. Quirky.</span> <br>
+              <br>
+              "Quirky is similar to Puppy from the User Interface and
+              applications point of view, but underneath has significant
+              differences. Originally, Quirky was a "full installation" only,
+              with special snapshot and recovery features. Later, live-CD
+              running-in-RAM with session-saving was added, and a "frugal
+              installation" mode, however all of this is different from Puppy".
+              <br>
+              <br>
+              "Quirky Linux is an experimental distribution, created by Barry
+              Kauler in 2013, after he retired from leading the Puppy Linux
+              project". <br>
+              <br>
+              "As from December 16, 2018, Quirky Linux is a discontinued
+              project." <br>
+              <br>
+              You can find more information about Quirky, including download
+              links, here: <br>
+              <br>
+              <a href="http://bkhome.org/linux/quirky-linux-an-experimental-distribution.html"
+                target="_blank" class="postlink">http://bkhome.org/linux/quirky-linux-an-experimental-distribution.html</a>
+              <br>
+              <br>
+              <br>
+              <span style="font-weight: bold">4. FatDog.</span> <br>
+              <br>
+              "Fatdog64 Linux is a small yet versatile 64-bit multi-user Linux
+              distribution. Originally created as a "fatter" (=more built-in
+              applications) derivative of Puppy Linux, Fatdog has grown to
+              become an independent, mature 64-bit Linux distribution while
+              still keeping true to Puppy Linux spirit: small, fast and
+              efficient". <br>
+              <br>
+              "Note: Fatdog uses the same packaging as Slackware (in fact Fatdog
+              adopts Slackware package management tools) but is not based on
+              Slackware so while you can install Slackware packages, they may or
+              may not work. TXZ packages are used starting with Fatdog 700". <br>
+              <br>
+              You can find more information about FatDog, including download
+              links, here: <br>
+              <br>
+              <a href="http://distro.ibiblio.org/fatdog/web/" target="_blank" class="postlink">http://distro.ibiblio.org/fatdog/web/</a>
+              <br>
+              <br>
+              <br>
+              <span style="font-weight: bold">5. The Debian/Ubuntu-based Dogs. <br>
+                <br>
+                Please refer to <a href="https://debiandog.github.io/doglinux/"
+                  target="_blank" class="postlink">https://debiandog.github.io/doglinux/</a>
+                for a list of the latest Debian/Ubuntu-based Dogs.</span> <br>
+              <br>
+              "DebianDog is very small Debian Live CD shaped to look and act
+              like Puppy Linux. Debian structure and Debian behaviour are
+              untouched and Debian documentation is 100% valid for DebianDog.
+              You have access to all debian repositories using apt-get or
+              synaptic". <br>
+              <br>
+              The Debian/Ubuntu-based Dogs do however also come in several
+              flavours being specially crafted from official Debian or Ubuntu
+              official distributions; nowadays using official debootstrap script
+              and then modified in-house by current maintainer(s). <br>
+              <br>
+              You can find more information about these various "Debian/Ubuntu
+              Dogs", including download links, here: <br>
+              <br>
+              <a href="https://debiandog.github.io/doglinux/" target="_blank" class="postlink">https://debiandog.github.io/doglinux/</a>
+              <br>
+              <br>
+              <br>
+              <span style="font-weight: bold">6. TazPuppy.</span> <br>
+              <br>
+              TazPup is a "Slitaz-based puppy. A hybrid distro". <br>
+              <br>
+              A downloadable build system (script) has also been created by
+              TazPup's originator. <br>
+              <br>
+              TazPuppy currently does not have its own website. Instead you can
+              find information including download/build-system information for
+              it in its main forum thread here: <br>
+              <br>
+              <a href="http://www.murga-linux.com/puppy/viewtopic.php?p=990164#990164"
+                target="_blank" class="postlink">http://www.murga-linux.com/puppy/viewtopic.php?p=990164#990164</a>
+              <br>
+              <br>
+              <br>
+              <span style="font-weight: bold">7. CorePup.</span> <br>
+              <br>
+              "corepup is a tinycore base <br>
+              with modifications and puppy and other stuff added to it <br>
+              hopefully combining the advantages of both <br>
+              <br>
+              the reason is that tinycore <br>
+              is a minimal and modular system <br>
+              that allows modifications to be snapped in and out like leggos". <br>
+              <br>
+              CorePup currently does not have its own website. Instead you can
+              find information for it in its main forum thread here: <br>
+              <br>
+              <a href="http://www.murga-linux.com/puppy/viewtopic.php?p=923231#923231"
+                target="_blank" class="postlink">http://www.murga-linux.com/puppy/viewtopic.php?p=923231#923231</a></span>
+            <span class="gensmall"><br>
+            </span></td>
+        </tr>
+      </tbody>
+    </table>
+    <p></p>
+    
+<p>Tags: <a href='tag_Puppy.html'>Puppy</a>, <a href='tag_FatDog.html'>FatDog</a>, <a href='tag_DebianDog.html'>DebianDog</a>, <a href='tag_Debian.html'>Debian</a>, <a href='tag_Ubuntu.html'>Ubuntu</a>, <a href='tag_Slackware.html'>Slackware</a>, <a href='tag_Slitaz.html'>Slitaz</a>, <a href='tag_TinyCore.html'>TinyCore</a></p>
+    <p></p>
+    <p></p>
+    <div id="all_posts"><a href="./index.html">Back to the index page</a></div>
+  
+
+<!-- text end -->
+]]></description><link>https://yourusername.github.io/distributions-supported-on-murga-puppy-linux-forum.html</link>
+<guid>https://yourusername.github.io/./distributions-supported-on-murga-puppy-linux-forum.html</guid>
+<dc:creator>wiak</dc:creator>
+<pubDate>Fri, 08 Mar 2019 18:29:10 +1300</pubDate></item>
+</channel></rss>
